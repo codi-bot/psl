@@ -3,297 +3,482 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PSL Stumple - Number Mode</title>
+    <title>PSL Stumple | Pro Edition</title>
     <style>
         :root {
             --psl-green: #00A651;
+            --psl-yellow: #fcd779;
             --correct: #6aaa64;
             --close: #c9b458;
-            --wrong: #787c7e;
+            --wrong: #3a3a3c;
+            --bg: #121213;
+            --card-bg: #1e1e20;
+            --accent: #00d2ff;
         }
-        body { font-family: sans-serif; text-align: center; background-color: #121213; color: white; padding: 20px; }
-        
-        /* Top Navigation/Controls */
-        .controls { 
-            background: #252526; padding: 15px; border-radius: 10px; 
-            max-width: 400px; margin: 0 auto 20px auto; border: 1px solid #3a3a3c;
-        }
-        .controls input[type="number"] { width: 60px; padding: 5px; border-radius: 4px; border: none; }
-        .btn { background: var(--psl-green); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
 
-        .search-container { margin: 20px auto; position: relative; max-width: 350px; }
-        #guessInput { padding: 12px; width: 100%; box-sizing: border-box; border-radius: 5px; border: none; }
-        
-        .suggestions { 
-            position: absolute; top: 100%; left: 0; right: 0; background: #333; 
-            list-style: none; padding: 0; z-index: 10; border-radius: 5px; max-height: 200px; overflow-y: auto;
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: white;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
         }
-        .suggestions li { padding: 10px; border-bottom: 1px solid #444; cursor: pointer; text-align: left; }
-        
-        .row { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-bottom: 5px; max-width: 900px; margin-left: auto; margin-right: auto; }
-        .cell { padding: 10px 2px; border: 1px solid #3a3a3c; font-size: 0.85rem; min-height: 50px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
-        .green { background-color: var(--correct); }
-        .yellow { background-color: var(--close); }
-        .grey { background-color: var(--wrong); }
-        .arrow { margin-left: 4px; }
+
+        /* UI Containers */
+        .header { margin-top: 20px; text-align: center; }
+        .header h1 { font-size: 2.5rem; letter-spacing: 2px; margin-bottom: 5px; color: var(--psl-green); text-shadow: 0 0 10px rgba(0,166,81,0.3); }
+        .guess-count { font-size: 1.1rem; color: #aaa; margin-bottom: 10px; }
+
+        .controls-card {
+            background: var(--card-bg);
+            padding: 15px 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            margin: 10px;
+            border: 1px solid #333;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        input {
+            background: #2b2b2c;
+            border: 1px solid #444;
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            outline: none;
+            transition: border 0.3s;
+        }
+        input:focus { border-color: var(--psl-green); }
+
+        .btn-primary {
+            background: var(--psl-green);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
+        }
+        .btn-primary:hover { transform: scale(1.05); background: #008541; box-shadow: 0 0 15px rgba(0,166,81,0.4); }
+
+        /* Suggestions UI */
+        .search-box { position: relative; width: 350px; margin-bottom: 20px; }
+        #suggestions {
+            position: absolute; width: 100%; background: #252526;
+            border-radius: 0 0 8px 8px; z-index: 100; max-height: 250px;
+            overflow-y: auto; list-style: none; padding: 0; margin: 0;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            border: 1px solid #333;
+        }
+        #suggestions li { padding: 12px; border-bottom: 1px solid #333; cursor: pointer; transition: 0.2s; }
+        #suggestions li:hover { background: #3a3a3c; color: var(--psl-green); }
+
+        /* Grid Styling */
+        .grid-header {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            width: 95%;
+            max-width: 850px;
+            margin-bottom: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 0.7rem;
+            color: #888;
+            text-align: center;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            width: 95%;
+            max-width: 850px;
+            margin-bottom: 8px;
+            animation: slideIn 0.5s ease-out forwards;
+        }
+
+        .cell {
+            background: var(--wrong);
+            height: 65px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            border: 2px solid #272729;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .green { background-color: var(--correct) !important; border-color: #85e085; }
+        .yellow { background-color: var(--close) !important; border-color: #ffe066; color: black; }
+        .arrow { font-size: 1.1rem; margin-left: 4px; line-height: 0; }
+
+        /* MODAL MENU */
+        #menu-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
+            display: none; justify-content: center; align-items: center;
+            z-index: 1000; animation: fadeIn 0.3s;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .modal {
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            border: 1px solid #444;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 0 40px rgba(0,0,0,0.5);
+        }
+        .modal h2 { font-size: 2.2rem; margin-top: 0; }
+        .modal p { font-size: 1.1rem; color: #ccc; margin: 20px 0; }
+        .win-text { color: var(--psl-green); }
+        .lose-text { color: #ff4d4d; }
+        .highlight { color: white; font-weight: bold; font-size: 1.3rem; display: block; margin-top: 5px; }
+
+        @media (max-width: 600px) {
+            .grid-header, .row { grid-template-columns: repeat(7, 1fr); gap: 4px; }
+            .cell { font-size: 0.6rem; height: 50px; }
+            .header h1 { font-size: 1.8rem; }
+        }
     </style>
 </head>
 <body>
 
-    <h1>PSL Guess The Player🏏</h1>
-
-    <div class="controls">
-        <label>Play Game #: </label>
-        <input type="number" id="gameNumber" min="1" max="159" placeholder="1-159">
-        <button class="btn" onclick="loadGameByNumber()">Load Player</button>
-        <p style="font-size: 0.7rem; margin-top: 10px; color: #aaa;">Enter a number from 1 to 159 to pick a specific player.</p>
+    <div class="header">
+        <h1>PSL QUIZ 🏏</h1>
+        <div class="guess-count">Guesses: <span id="currentGuesses">0</span> / 8</div>
     </div>
 
-    <div class="search-container">
-        <input type="text" id="guessInput" placeholder="Guess a player name..." onkeyup="showSuggestions()">
-        <ul id="suggestionsList" class="suggestions"></ul>
+    <div class="controls-card">
+        <input type="number" id="gameNo" placeholder="Enter ID (1-160)" min="1" max="160">
+        <button class="btn-primary" onclick="resetGame(document.getElementById('gameNo').value)">LOAD PLAYER</button>
     </div>
 
-    <div id="gameStatus" style="margin-bottom: 10px; font-weight: bold; color: var(--psl-green);"></div>
-
-    <div class="row" style="border-bottom: 2px solid #555;">
-        <div class="cell">Name</div><div class="cell">Nation</div><div class="cell">Team</div>
-        <div class="cell">Role</div><div class="cell">Batting</div><div class="cell">Age</div><div class="cell">Matches</div>
+    <div class="search-box">
+        <input type="text" id="mainInput" placeholder="Search Player Name..." onkeyup="filterPlayers()" autocomplete="off">
+        <ul id="suggestions"></ul>
     </div>
-    <div id="grid"></div>
+
+    <div id="game-container" style="width: 100%; display: flex; flex-direction: column; align-items: center; padding-bottom: 50px;">
+        <div class="grid-header">
+            <div>Player</div><div>Nation</div><div>Current</div><div>Role</div><div>Bat</div><div>Age</div><div>Matches</div>
+        </div>
+        <div id="gameBoard"></div>
+    </div>
+
+    <div id="menu-overlay">
+        <div class="modal">
+            <h2 id="modal-title">WELL DONE!</h2>
+            <p id="modal-msg">You found the player in 4 turns.</p>
+            <p>The player was: <span id="correct-player-name" class="highlight">Babar Azam</span></p>
+            <button class="btn-primary" style="padding: 15px 40px; font-size: 1.1rem;" onclick="closeMenu()">VIEW BOARD</button>
+            <button class="btn-primary" style="padding: 15px 40px; font-size: 1.1rem; background: #444; margin-top: 10px;" onclick="resetGame()">PLAY NEW</button>
+        </div>
+    </div>
 
 <script>
-    // 1. UPDATED DATABASE (Accurate counts as of 2024/25)
+    // DATA SOURCE: 160 Players with prevTeams
     const players = [
-        { id: 1, name: "Babar Azam", nation: "Pakistan", team: "Peshawar Zalmi", role: "Batter", batting: "Right", age: 30, matches: 94 },
-        { id: 2, name: "Fakhar Zaman", nation: "Pakistan", team: "Lahore Qalandars", role: "Batter", batting: "Left", age: 34, matches: 89 },
-        { id: 3, name: "Mohammad Rizwan", nation: "Pakistan", team: "Multan Sultans", role: "WK-Batter", batting: "Right", age: 32, matches: 82 },
-        { id: 4, name: "Shadab Khan", nation: "Pakistan", team: "Islamabad United", role: "All-Rounder", batting: "Right", age: 26, matches: 84 },
-        { id: 5, name: "Shaheen Afridi", nation: "Pakistan", team: "Lahore Qalandars", role: "Bowler", batting: "Left", age: 24, matches: 74 },
-        { id: 6, name: "Rilee Rossouw", nation: "South Africa", team: "Quetta Gladiators", role: "Batter", batting: "Left", age: 35, matches: 85 },
-        { id: 7, name: "Shoaib Malik", nation: "Pakistan", team: "Quetta Gladiators", role: "All-Rounder", batting: "Right", age: 43, matches: 91 },
-        { id: 8, name: "Asif Ali", nation: "Pakistan", team: "Lahore Qalandars", role: "Batter", batting: "Right", age: 33, matches: 80 },
-        { id: 9, name: "Naseem Shah", nation: "Pakistan", team: "Islamabad United", role: "Bowler", batting: "Right", age: 22, matches: 39 },
-        { id: 10, name: "Haris Rauf", nation: "Pakistan", team: "Lahore Qalandars", role: "Bowler", batting: "Right", age: 31, matches: 64 },
-        { id: 11, name: "Sarfaraz Ahmed", nation: "Pakistan", team: "Quetta Gladiators", role: "WK-Batter", batting: "Right", age: 37, matches: 84 },
-    { id: 12, name: "Iftikhar Ahmed", nation: "Pakistan", team: "Multan Sultans", role: "All-Rounder", batting: "Right", age: 34, matches: 81 },
-    { id: 13, name: "Alex Hales", nation: "England", team: "Islamabad United", role: "Batter", batting: "Right", age: 35, matches: 44 },
-    { id: 14, name: "Mohammad Amir", nation: "Pakistan", team: "Quetta Gladiators", role: "Bowler", batting: "Left", age: 32, matches: 75 },
-    { id: 15, name: "Imad Wasim", nation: "Pakistan", team: "Islamabad United", role: "All-Rounder", batting: "Left", age: 36, matches: 82 },
-    { id: 16, name: "Jason Roy", nation: "England", team: "Quetta Gladiators", role: "Batter", batting: "Right", age: 34, matches: 38 },
-    { id: 17, name: "Saim Ayub", nation: "Pakistan", team: "Peshawar Zalmi", role: "Batter", batting: "Left", age: 22, matches: 27 },
-    { id: 18, name: "Hasan Ali", nation: "Pakistan", team: "Karachi Kings", role: "Bowler", batting: "Right", age: 30, matches: 82 },
-    { id: 19, name: "David Wiese", nation: "Namibia", team: "Lahore Qalandars", role: "All-Rounder", batting: "Right", age: 39, matches: 54 },
-    { id: 20, name: "Colin Munro", nation: "New Zealand", team: "Islamabad United", role: "Batter", batting: "Left", age: 37, matches: 50 },
-    { id: 21, name: "Azam Khan", nation: "Pakistan", team: "Islamabad United", role: "WK-Batter", batting: "Right", age: 26, matches: 52 },
-    { id: 22, name: "Usama Mir", nation: "Pakistan", team: "Multan Sultans", role: "Bowler", batting: "Right", age: 28, matches: 35 },
-    { id: 23, name: "Abbas Afridi", nation: "Pakistan", team: "Karachi Kings", role: "Bowler", batting: "Right", age: 23, matches: 24 },
-    { id: 24, name: "Sikandar Raza", nation: "Zimbabwe", team: "Lahore Qalandars", role: "All-Rounder", batting: "Right", age: 38, matches: 20 },
-    { id: 25, name: "Agha Salman", nation: "Pakistan", team: "Islamabad United", role: "All-Rounder", batting: "Right", age: 31, matches: 25 },
-    { id: 26, name: "Shan Masood", nation: "Pakistan", team: "Karachi Kings", role: "Batter", batting: "Left", age: 35, matches: 54 },
-    { id: 27, name: "Mohammad Haris", nation: "Pakistan", team: "Peshawar Zalmi", role: "WK-Batter", batting: "Right", age: 23, matches: 28 },
-    { id: 28, name: "Wahab Riaz", nation: "Pakistan", team: "Peshawar Zalmi", role: "Bowler", batting: "Right", age: 39, matches: 88 },
-    { id: 29, name: "Tim Seifert", nation: "New Zealand", team: "Karachi Kings", role: "WK-Batter", batting: "Right", age: 30, matches: 15 },
-    { id: 30, name: "James Vince", nation: "England", team: "Karachi Kings", role: "Batter", batting: "Right", age: 33, matches: 40 },
-    { id: 31, name: "Faheem Ashraf", nation: "Pakistan", team: "Quetta Gladiators", role: "All-Rounder", batting: "Left", age: 30, matches: 73 },
-    { id: 32, name: "Zaman Khan", nation: "Pakistan", team: "Lahore Qalandars", role: "Bowler", batting: "Right", age: 23, matches: 34 },
-    { id: 33, name: "Khushdil Shah", nation: "Pakistan", team: "Karachi Kings", role: "All-Rounder", batting: "Left", age: 29, matches: 58 },
-    { id: 34, name: "Kieron Pollard", nation: "West Indies", team: "Karachi Kings", role: "All-Rounder", batting: "Right", age: 37, matches: 48 },
-    { id: 35, name: "Usman Khan", nation: "Pakistan", team: "Multan Sultans", role: "Batter", batting: "Right", age: 29, matches: 18 },
-    { id: 36, name: "Abdullah Shafique", nation: "Pakistan", team: "Lahore Qalandars", role: "Batter", batting: "Right", age: 25, matches: 30 },
-    { id: 37, name: "Abrar Ahmed", nation: "Pakistan", team: "Quetta Gladiators", role: "Bowler", batting: "Right", age: 26, matches: 22 },
-    { id: 38, name: "Aamir Jamal", nation: "Pakistan", team: "Karachi Kings", role: "All-Rounder", batting: "Right", age: 28, matches: 15 },
-    { id: 39, name: "Sahibzada Farhan", nation: "Pakistan", team: "Islamabad United", role: "Batter", batting: "Right", age: 28, matches: 32 },
-    { id: 40, name: "Saud Shakeel", nation: "Pakistan", team: "Quetta Gladiators", role: "Batter", batting: "Left", age: 29, matches: 12 },
-    { id: 41, name: "Wanindu Hasaranga", nation: "Sri Lanka", team: "Quetta Gladiators", role: "All-Rounder", batting: "Right", age: 27, matches: 10 },
-    { id: 42, name: "David Willey", nation: "England", team: "Multan Sultans", role: "Bowler", batting: "Right", age: 34, matches: 25 },
-    { id: 43, name: "Luke Wood", nation: "England", team: "Peshawar Zalmi", role: "Bowler", batting: "Left", age: 29, matches: 11 },
-    { id: 44, name: "Shahnawaz Dahani", nation: "Pakistan", team: "Multan Sultans", role: "Bowler", batting: "Right", age: 26, matches: 28 },
-    { id: 45, name: "Chris Jordan", nation: "England", team: "Multan Sultans", role: "Bowler", batting: "Right", age: 36, matches: 28 },
-    { id: 46, name: "Rassie van der Dussen", nation: "South Africa", team: "Islamabad United", role: "Batter", batting: "Right", age: 35, matches: 13 },
-    { id: 47, name: "Mohammad Nawaz", nation: "Pakistan", team: "Islamabad United", role: "All-Rounder", batting: "Left", age: 30, matches: 78 },
-    { id: 48, name: "Tom Kohler-Cadmore", nation: "England", team: "Peshawar Zalmi", role: "Batter", batting: "Right", age: 30, matches: 22 },
-    { id: 49, name: "Anwar Ali", nation: "Pakistan", team: "Multan Sultans", role: "All-Rounder", batting: "Right", age: 37, matches: 52 },
-    { id: 50, name: "Sharjeel Khan", nation: "Pakistan", team: "Karachi Kings", role: "Batter", batting: "Left", age: 35, matches: 50 },
-    { id: 51, name: "Sohail Tanvir", nation: "Pakistan", team: "Quetta Gladiators", role: "Bowler", batting: "Left", age: 40, matches: 65 },
-    { id: 52, name: "Kamran Akmal", nation: "Pakistan", team: "Peshawar Zalmi", role: "WK-Batter", batting: "Right", age: 43, matches: 75 },
-    { id: 53, name: "Sherfane Rutherford", nation: "West Indies", team: "Quetta Gladiators", role: "Batter", batting: "Left", age: 26, matches: 32 },
-    { id: 54, name: "Daniel Sams", nation: "Australia", team: "Peshawar Zalmi", role: "All-Rounder", batting: "Right", age: 32, matches: 12 },
-    { id: 55, name: "Sam Billings", nation: "England", team: "Lahore Qalandars", role: "WK-Batter", batting: "Right", age: 33, matches: 18 },
-    { id: 56, name: "Sufiyan Muqeem", nation: "Pakistan", team: "Peshawar Zalmi", role: "Bowler", batting: "Left", age: 25, matches: 10 },
-    { id: 57, name: "Mohammad Ali", nation: "Pakistan", team: "Peshawar Zalmi", role: "Bowler", batting: "Right", age: 32, matches: 12 },
-    { id: 58, name: "Hussain Talat", nation: "Pakistan", team: "Peshawar Zalmi", role: "All-Rounder", batting: "Left", age: 28, matches: 55 },
-    { id: 59, name: "Asif Afridi", nation: "Pakistan", team: "Lahore Qalandars", role: "All-Rounder", batting: "Right", age: 37, matches: 15 },
-    { id: 60, name: "Tayyab Tahir", nation: "Pakistan", team: "Multan Sultans", role: "Batter", batting: "Right", age: 31, matches: 12 },
-    { id: 61, name: "Matthew Short", nation: "Australia", team: "Islamabad United", role: "All-Rounder", batting: "Right", age: 29, matches: 0 },
-    { id: 62, name: "David Warner", nation: "Australia", team: "Karachi Kings", role: "Batter", batting: "Left", age: 39, matches: 11 },
-    { id: 63, name: "Daryl Mitchell", nation: "New Zealand", team: "Lahore Qalandars", role: "All-Rounder", batting: "Right", age: 34, matches: 9 },
-    { id: 64, name: "Michael Bracewell", nation: "New Zealand", team: "Multan Sultans", role: "All-Rounder", batting: "Left", age: 33, matches: 8 },
-    { id: 65, name: "Mark Chapman", nation: "New Zealand", team: "Quetta Gladiators", role: "Batter", batting: "Left", age: 30, matches: 5 },
-    { id: 66, name: "Finn Allen", nation: "New Zealand", team: "Quetta Gladiators", role: "Batter", batting: "Right", age: 25, matches: 11 },
-    { id: 67, name: "Adam Milne", nation: "New Zealand", team: "Karachi Kings", role: "Bowler", batting: "Right", age: 32, matches: 2 },
-    { id: 68, name: "Kusal Perera", nation: "Sri Lanka", team: "Lahore Qalandars", role: "WK-Batter", batting: "Left", age: 34, matches: 4 },
-    { id: 69, name: "Akeal Hosein", nation: "West Indies", team: "Quetta Gladiators", role: "Bowler", batting: "Left", age: 31, matches: 10 },
-    { id: 70, name: "Johnson Charles", nation: "West Indies", team: "Multan Sultans", role: "Batter", batting: "Right", age: 36, matches: 15 },
-    { id: 71, name: "Shai Hope", nation: "West Indies", team: "Multan Sultans", role: "WK-Batter", batting: "Right", age: 31, matches: 9 },
-    { id: 72, name: "Jason Holder", nation: "West Indies", team: "Islamabad United", role: "All-Rounder", batting: "Right", age: 33, matches: 8 },
-    { id: 73, name: "Kane Williamson", nation: "New Zealand", team: "Karachi Kings", role: "Batter", batting: "Right", age: 34, matches: 0 },
-    { id: 74, name: "Chris Lynn", nation: "Australia", team: "Multan Sultans", role: "Batter", batting: "Right", age: 34, matches: 15 },
-    { id: 76, name: "Ben Dwarshuis", nation: "Australia", team: "Islamabad United", role: "Bowler", batting: "Left", age: 30, matches: 7 },
-    { id: 77, name: "Rishad Hossain", nation: "Bangladesh", team: "Lahore Qalandars", role: "Bowler", batting: "Right", age: 22, matches: 0 },
-    { id: 78, name: "Litton Das", nation: "Bangladesh", team: "Karachi Kings", role: "WK-Batter", batting: "Right", age: 30, matches: 0 },
-    { id: 79, name: "Hassan Nawaz", nation: "Pakistan", team: "Quetta Gladiators", role: "Batter", batting: "Right", age: 23, matches: 12 },
-    { id: 80, name: "Jahandad Khan", nation: "Pakistan", team: "Lahore Qalandars", role: "All-Rounder", batting: "Left", age: 21, matches: 9 },
-    { id: 81, name: "Faisal Akram", nation: "Pakistan", team: "Multan Sultans", role: "Bowler", batting: "Left", age: 21, matches: 3 },
-    { id: 82, name: "Arif Yaqoob", nation: "Pakistan", team: "Peshawar Zalmi", role: "Bowler", batting: "Right", age: 30, matches: 5 },
-    { id: 83, name: "Mehran Mumtaz", nation: "Pakistan", team: "Peshawar Zalmi", role: "Bowler", batting: "Left", age: 21, matches: 5 },
-    { id: 84, name: "Khawaja Nafay", nation: "Pakistan", team: "Quetta Gladiators", role: "Batter", batting: "Right", age: 23, matches: 10 },
-    { id: 85, name: "Usman Tariq", nation: "Pakistan", team: "Quetta Gladiators", role: "Bowler", batting: "Right", age: 27, matches: 6 },
-    { id: 86, name: "Irfan Khan Niazi", nation: "Pakistan", team: "Karachi Kings", role: "Batter", batting: "Right", age: 22, matches: 18 },
-    { id: 87, name: "Ali Raza", nation: "Pakistan", team: "Peshawar Zalmi", role: "Bowler", batting: "Right", age: 17, matches: 0 },
-    { id: 88, name: "Hunain Shah", nation: "Pakistan", team: "Islamabad United", role: "Bowler", batting: "Right", age: 21, matches: 8 },
-    { id: 89, name: "Ubaid Shah", nation: "Pakistan", team: "Multan Sultans", role: "Bowler", batting: "Right", age: 19, matches: 11 },
-    { id: 90, name: "Yasir Khan", nation: "Pakistan", team: "Multan Sultans", role: "Batter", batting: "Right", age: 24, matches: 7 },
-    { id: 91, name: "Mir Hamza", nation: "Pakistan", team: "Karachi Kings", role: "Bowler", batting: "Left", age: 32, matches: 20 },
-    { id: 92, name: "Rumman Raees", nation: "Pakistan", team: "Islamabad United", role: "Bowler", batting: "Right", age: 33, matches: 60 },
-    { id: 93, name: "Zahid Mahmood", nation: "Pakistan", team: "Karachi Kings", role: "Bowler", batting: "Right", age: 36, matches: 25 },
-    { id: 94, name: "Salman Irshad", nation: "Pakistan", team: "Islamabad United", role: "Bowler", batting: "Right", age: 29, matches: 35 },
-    { id: 95, name: "Mohammad Wasim Jr", nation: "Pakistan", team: "Quetta Gladiators", role: "Bowler", batting: "Right", age: 23, matches: 45 },
-    { id: 96, name: "Arafat Minhas", nation: "Pakistan", team: "Karachi Kings", role: "All-Rounder", batting: "Left", age: 19, matches: 5 },
-    { id: 97, name: "Kamran Ghulam", nation: "Pakistan", team: "Multan Sultans", role: "Batter", batting: "Right", age: 29, matches: 25 },
-    { id: 98, name: "Haider Ali", nation: "Pakistan", team: "Islamabad United", role: "Batter", batting: "Right", age: 24, matches: 55 },
-    { id: 99, name: "Mohammad Hasnain", nation: "Pakistan", team: "Multan Sultans", role: "Bowler", batting: "Right", age: 24, matches: 42 },
-    { id: 100, name: "Danish Aziz", nation: "Pakistan", team: "Quetta Gladiators", role: "All-Rounder", batting: "Left", age: 29, matches: 20 },
-    { id: 101, name: "Omair Yousuf", nation: "Pakistan", team: "Karachi Kings", role: "Batter", batting: "Right", age: 26, matches: 5 },
-    { id: 102, name: "Ahmed Daniyal", nation: "Pakistan", team: "Peshawar Zalmi", role: "Bowler", batting: "Right", age: 27, matches: 15 },
-    { id: 103, name: "Akif Javed", nation: "Pakistan", team: "Multan Sultans", role: "Bowler", batting: "Left", age: 24, matches: 20 },
-    { id: 104, name: "Khurram Shehzad", nation: "Pakistan", team: "Quetta Gladiators", role: "Bowler", batting: "Right", age: 25, matches: 15 },
-    { id: 105, name: "Haseebullah Khan", nation: "Pakistan", team: "Quetta Gladiators", role: "WK-Batter", batting: "Left", age: 21, matches: 10 },
-    { id: 106, name: "Mohammad Shehzad", nation: "Pakistan", team: "Islamabad United", role: "Batter", batting: "Right", age: 20, matches: 5 },
-    { id: 107, name: "Salman Mirza", nation: "Pakistan", team: "Lahore Qalandars", role: "Bowler", batting: "Right", age: 26, matches: 10 },
-    { id: 108, name: "Muhammad Akhlaq", nation: "Pakistan", team: "Lahore Qalandars", role: "WK-Batter", batting: "Right", age: 32, matches: 10 },
-    { id: 109, name: "Mohammad Azab", nation: "Pakistan", team: "Lahore Qalandars", role: "Bowler", batting: "Right", age: 21, matches: 0 },
-    { id: 110, name: "Maaz Sadaqat", nation: "Pakistan", team: "Peshawar Zalmi", role: "All-Rounder", batting: "Left", age: 19, matches: 4 },
-    { id: 111, name: "Misbah-ul-Haq", nation: "Pakistan", team: "Peshawar Zalmi", role: "Batter", batting: "Right", age: 51, matches: 39 },
-    { id: 112, name: "Shahid Afridi", nation: "Pakistan", team: "Quetta Gladiators", role: "All-Rounder", batting: "Right", age: 48, matches: 53 },
-    { id: 113, name: "Shane Watson", nation: "Australia", team: "Quetta Gladiators", role: "All-Rounder", batting: "Right", age: 43, matches: 46 },
-    { id: 114, name: "Kevin Pietersen", nation: "England", team: "Quetta Gladiators", role: "Batter", batting: "Right", age: 44, matches: 27 },
-    { id: 115, name: "Luke Ronchi", nation: "New Zealand", team: "Islamabad United", role: "WK-Batter", batting: "Right", age: 43, matches: 31 },
-    { id: 116, name: "Kumar Sangakkara", nation: "Sri Lanka", team: "Multan Sultans", role: "WK-Batter", batting: "Left", age: 47, matches: 28 },
-    { id: 117, name: "Darren Sammy", nation: "West Indies", team: "Peshawar Zalmi", role: "All-Rounder", batting: "Right", age: 41, matches: 49 },
-    { id: 118, name: "Mohammad Hafeez", nation: "Pakistan", team: "Quetta Gladiators", role: "All-Rounder", batting: "Right", age: 44, matches: 78 },
-    { id: 119, name: "Chris Gayle", nation: "West Indies", team: "Quetta Gladiators", role: "Batter", batting: "Left", age: 45, matches: 16 },
-    { id: 120, name: "Younis Khan", nation: "Pakistan", team: "Peshawar Zalmi", role: "Batter", batting: "Right", age: 47, matches: 10 },
-    { id: 121, name: "Brendon McCullum", nation: "New Zealand", team: "Lahore Qalandars", role: "Batter", batting: "Right", age: 43, matches: 18 },
-    { id: 122, name: "Imran Tahir", nation: "South Africa", team: "Karachi Kings", role: "Bowler", batting: "Right", age: 45, matches: 50 },
-    { id: 123, name: "Ravi Bopara", nation: "England", team: "Karachi Kings", role: "All-Rounder", batting: "Right", age: 39, matches: 31 },
-    { id: 124, name: "Dwayne Bravo", nation: "West Indies", team: "Quetta Gladiators", role: "All-Rounder", batting: "Right", age: 41, matches: 15 },
-    { id: 125, name: "Saeed Ajmal", nation: "Pakistan", team: "Islamabad United", role: "Bowler", batting: "Right", age: 47, matches: 12 },
-    { id: 126, name: "Ahmed Shehzad", nation: "Pakistan", team: "Quetta Gladiators", role: "Batter", batting: "Right", age: 33, matches: 45 },
-    { id: 127, name: "Umar Akmal", nation: "Pakistan", team: "Quetta Gladiators", role: "Batter", batting: "Right", age: 34, matches: 40 },
-    { id: 128, name: "Tamim Iqbal", nation: "Bangladesh", team: "Peshawar Zalmi", role: "Batter", batting: "Left", age: 35, matches: 20 },
-    { id: 129, name: "Eoin Morgan", nation: "England", team: "Peshawar Zalmi", role: "Batter", batting: "Left", age: 38, matches: 10 },
-    { id: 130, name: "Andre Russell", nation: "West Indies", team: "Islamabad United", role: "All-Rounder", batting: "Right", age: 36, matches: 22 },
-    { id: 131, name: "Ben Dunk", nation: "Australia", team: "Lahore Qalandars", role: "WK-Batter", batting: "Left", age: 37, matches: 30 },
-    { id: 132, name: "Colin Ingram", nation: "South Africa", team: "Karachi Kings", role: "Batter", batting: "Left", age: 39, matches: 35 },
-    { id: 133, name: "Samuel Badree", nation: "West Indies", team: "Islamabad United", role: "Bowler", batting: "Right", age: 43, matches: 20 },
-    { id: 134, name: "Brad Hodge", nation: "Australia", team: "Peshawar Zalmi", role: "Batter", batting: "Right", age: 49, matches: 10 },
-    { id: 135, name: "Mahela Jayawardene", nation: "Sri Lanka", team: "Karachi Kings", role: "Batter", batting: "Right", age: 47, matches: 12 },
-    { id: 136, name: "Grant Elliott", nation: "New Zealand", team: "Quetta Gladiators", role: "All-Rounder", batting: "Right", age: 45, matches: 15 },
-    { id: 137, name: "Thisara Perera", nation: "Sri Lanka", team: "Quetta Gladiators", role: "All-Rounder", batting: "Left", age: 35, matches: 18 },
-    { id: 138, name: "Mohammad Irfan", nation: "Pakistan", team: "Multan Sultans", role: "Bowler", batting: "Right", age: 42, matches: 62 },
-    { id: 139, name: "Sohaib Maqsood", nation: "Pakistan", team: "Multan Sultans", role: "Batter", batting: "Right", age: 37, matches: 55 },
-    { id: 140, name: "Samit Patel", nation: "England", team: "Islamabad United", role: "All-Rounder", batting: "Right", age: 40, matches: 35 },
-    { id: 141, name: "Liam Livingstone", nation: "England", team: "Peshawar Zalmi", role: "All-Rounder", batting: "Right", age: 31, matches: 15 },
-    { id: 142, name: "Sunil Narine", nation: "West Indies", team: "Lahore Qalandars", role: "All-Rounder", batting: "Left", age: 36, matches: 25 },
-    { id: 143, name: "Zulfiqar Babar", nation: "Pakistan", team: "Quetta Gladiators", role: "Bowler", batting: "Right", age: 46, matches: 24 },
-    { id: 144, name: "Azhar Ali", nation: "Pakistan", team: "Lahore Qalandars", role: "Batter", batting: "Right", age: 39, matches: 20 },
-    { id: 145, name: "Fawad Alam", nation: "Pakistan", team: "Karachi Kings", role: "All-Rounder", batting: "Left", age: 39, matches: 12 },
-    { id: 146, name: "Yasir Shah", nation: "Pakistan", team: "Lahore Qalandars", role: "Bowler", batting: "Right", age: 38, matches: 30 },
-    { id: 147, name: "Dawid Malan", nation: "England", team: "Multan Sultans", role: "Batter", batting: "Left", age: 37, matches: 22 },
-    { id: 148, name: "Shakib Al Hasan", nation: "Bangladesh", team: "Peshawar Zalmi", role: "All-Rounder", batting: "Left", age: 37, matches: 15 },
-    { id: 149, name: "James Faulkner", nation: "Australia", team: "Lahore Qalandars", role: "All-Rounder", batting: "Right", age: 34, matches: 12 },
-    { id: 150, name: "Mujeeb Ur Rahman", nation: "Afghanistan", team: "Peshawar Zalmi", role: "Bowler", batting: "Right", age: 23, matches: 10 },
-    { id: 151, name: "Mohammad Nabi", nation: "Afghanistan", team: "Karachi Kings", role: "All-Rounder", batting: "Right", age: 39, matches: 35 },
-    { id: 152, name: "Usman Khawaja", nation: "Australia", team: "Islamabad United", role: "Batter", batting: "Left", age: 38, matches: 10 },
-    { id: 153, name: "Tim David", nation: "Australia", team: "Multan Sultans", role: "Batter", batting: "Right", age: 28, matches: 25 },
-    { id: 154, name: "Rashid Khan", nation: "Afghanistan", team: "Lahore Qalandars", role: "Bowler", batting: "Right", age: 26, matches: 35 },
-    { id: 155, name: "Bilal Asif", nation: "Pakistan", team: "Karachi Kings", role: "All-Rounder", batting: "Right", age: 39, matches: 15 },
-    { id: 156, name: "Cameron Delport", nation: "South Africa", team: "Karachi Kings", role: "All-Rounder", batting: "Left", age: 35, matches: 32 },
-    { id: 157, name: "Lendl Simmons", nation: "West Indies", team: "Karachi Kings", role: "Batter", batting: "Right", age: 39, matches: 18 },
-    { id: 158, name: "Dwayne Smith", nation: "West Indies", team: "Islamabad United", role: "Batter", batting: "Right", age: 41, matches: 25 },
-    { id: 159, name: "Tymal Mills", nation: "England", team: "Islamabad United", role: "Bowler", batting: "Right", age: 32, matches: 20 },
-    { id: 160, name: "Rahmanullah Gurbaz", nation: "Afghanistan", team: "Islamabad United", role: "WK-Batter", batting: "Right", age: 23, matches: 18 }
+       { id: 66, name: "Babar Azam", nation: "Pakistan", team: "Peshawar Zalmi", prevTeams: ["Islamabad United", "Karachi Kings"], role: "Batter", batting: "Right", age: 30, matches: 94 },
+    { id: 38, name: "Fakhar Zaman", nation: "Pakistan", team: "Lahore Qalandars", prevTeams: [], role: "Batter", batting: "Left", age: 34, matches: 89 },
+    { id: 23, name: "Mohammad Rizwan", nation: "Pakistan", team: "Multan Sultans", prevTeams: ["Lahore Qalandars", "Karachi Kings"], role: "WK-Batter", batting: "Right", age: 32, matches: 82 },
+    { id: 45, name: "Shadab Khan", nation: "Pakistan", team: "Islamabad United", prevTeams: [], role: "All-Rounder", batting: "Right", age: 26, matches: 84 },
+    { id: 55, name: "Shaheen Afridi", nation: "Pakistan", team: "Lahore Qalandars", prevTeams: [], role: "Bowler", batting: "Left", age: 24, matches: 74 },
+    { id: 63, name: "Rilee Rossouw", nation: "South Africa", team: "Quetta Gladiators", prevTeams: ["Multan Sultans"], role: "Batter", batting: "Left", age: 35, matches: 85 },
+    { id: 78, name: "Shoaib Malik", nation: "Pakistan", team: "Quetta Gladiators", prevTeams: ["Karachi Kings", "Multan Sultans", "Peshawar Zalmi"], role: "All-Rounder", batting: "Right", age: 43, matches: 91 },
+    { id: 83, name: "Asif Ali", nation: "Pakistan", team: "Lahore Qalandars", prevTeams: ["Islamabad United", "Peshawar Zalmi"], role: "Batter", batting: "Right", age: 33, matches: 80 },
+    { id: 94, name: "Naseem Shah", nation: "Pakistan", team: "Islamabad United", prevTeams: ["Quetta Gladiators"], role: "Bowler", batting: "Right", age: 22, matches: 39 },
+    { id: 52, name: "Haris Rauf", nation: "Pakistan", team: "Lahore Qalandars", prevTeams: [], role: "Bowler", batting: "Right", age: 31, matches: 64 },
+    { id: 59, name: "Sarfaraz Ahmed", nation: "Pakistan", team: "Quetta Gladiators", prevTeams: [], role: "WK-Batter", batting: "Right", age: 37, matches: 84 },
+    { id: 73, name: "Iftikhar Ahmed", nation: "Pakistan", team: "Multan Sultans", prevTeams: ["Karachi Kings", "Peshawar Zalmi", "Islamabad United", "Quetta Gladiators"], role: "All-Rounder", batting: "Right", age: 34, matches: 81 },
+    { id: 87, name: "Alex Hales", nation: "England", team: "Islamabad United", prevTeams: [], role: "Batter", batting: "Right", age: 35, matches: 44 },
+    { id: 34, name: "Mohammad Amir", nation: "Pakistan", team: "Quetta Gladiators", prevTeams: ["Karachi Kings"], role: "Bowler", batting: "Left", age: 32, matches: 75 },
+    { id: 42, name: "Imad Wasim", nation: "Pakistan", team: "Islamabad United", prevTeams: ["Karachi Kings"], role: "All-Rounder", batting: "Left", age: 36, matches: 82 },
+    { id: 48, name: "Jason Roy", nation: "England", team: "Quetta Gladiators", prevTeams: ["Lahore Qalandars"], role: "Batter", batting: "Right", age: 34, matches: 38 },
+    { id: 69, name: "Saim Ayub", nation: "Pakistan", team: "Peshawar Zalmi", prevTeams: ["Quetta Gladiators"], role: "Batter", batting: "Left", age: 22, matches: 27 },
+    { id: 118, name: "Hasan Ali", nation: "Pakistan", team: "Karachi Kings", prevTeams: ["Peshawar Zalmi", "Islamabad United"], role: "Bowler", batting: "Right", age: 30, matches: 82 },
+    { id: 142, name: "David Wiese", nation: "Namibia", team: "Lahore Qalandars", prevTeams: ["Karachi Kings"], role: "All-Rounder", batting: "Right", age: 39, matches: 54 },
+    { id: 129, name: "Colin Munro", nation: "New Zealand", team: "Islamabad United", prevTeams: ["Karachi Kings"], role: "Batter", batting: "Left", age: 37, matches: 50 },
+    { id: 21, name: "Azam Khan", nation: "Pakistan", team: "Islamabad United", prevTeams: ["Quetta Gladiators"], role: "WK-Batter", batting: "Right", age: 26, matches: 52 },
+    { id: 22, name: "Usama Mir", nation: "Pakistan", team: "Multan Sultans", role: "Bowler", batting: "Right", age: 28, matches: 35, prevTeams: ["Karachi Kings"] },
+    { id: 3, name: "Abbas Afridi", nation: "Pakistan", team: "Karachi Kings", role: "Bowler", batting: "Right", age: 23, matches: 24, prevTeams: ["Multan Sultans"] },
+    { id: 24, name: "Sikandar Raza", nation: "Zimbabwe", team: "Lahore Qalandars", role: "All-Rounder", batting: "Right", age: 38, matches: 20, prevTeams: [] },
+    { id: 25, name: "Agha Salman", nation: "Pakistan", team: "Islamabad United", role: "All-Rounder", batting: "Right", age: 31, matches: 25, prevTeams: ["Lahore Qalandars"] },
+    { id: 26, name: "Shan Masood", nation: "Pakistan", team: "Karachi Kings", role: "Batter", batting: "Left", age: 35, matches: 54, prevTeams: ["Multan Sultans"] },
+    { id: 27, name: "Mohammad Haris", nation: "Pakistan", team: "Peshawar Zalmi", role: "WK-Batter", batting: "Right", age: 23, matches: 28, prevTeams: [] },
+    { id: 28, name: "Wahab Riaz", nation: "Pakistan", team: "Peshawar Zalmi", role: "Bowler", batting: "Right", age: 39, matches: 88, prevTeams: [] },
+    { id: 29, name: "Tim Seifert", nation: "New Zealand", team: "Karachi Kings", role: "WK-Batter", batting: "Right", age: 30, matches: 15, prevTeams: [] },
+    { id: 30, name: "James Vince", nation: "England", team: "Karachi Kings", role: "Batter", batting: "Right", age: 33, matches: 40, prevTeams: ["Multan Sultans"] },
+    { id: 31, name: "Faheem Ashraf", nation: "Pakistan", team: "Quetta Gladiators", role: "All-Rounder", batting: "Left", age: 30, matches: 73, prevTeams: ["Islamabad United"] },
+    { id: 32, name: "Zaman Khan", nation: "Pakistan", team: "Lahore Qalandars", role: "Bowler", batting: "Right", age: 23, matches: 34, prevTeams: [] },
+    { id: 33, name: "Khushdil Shah", nation: "Pakistan", team: "Karachi Kings", role: "All-Rounder", batting: "Left", age: 29, matches: 58, prevTeams: ["Peshawar Zalmi", "Multan Sultans"] },
+    { id: 14, name: "Kieron Pollard", nation: "West Indies", team: "Karachi Kings", role: "All-Rounder", batting: "Right", age: 37, matches: 48, prevTeams: ["Peshawar Zalmi", "Multan Sultans"] },
+    { id: 35, name: "Usman Khan", nation: "Pakistan", team: "Multan Sultans", role: "Batter", batting: "Right", age: 29, matches: 18, prevTeams: ["Quetta Gladiators"] },
+    { id: 36, name: "Abdullah Shafique", nation: "Pakistan", team: "Lahore Qalandars", role: "Batter", batting: "Right", age: 25, matches: 30, prevTeams: [] },
+    { id: 37, name: "Abrar Ahmed", nation: "Pakistan", team: "Quetta Gladiators", role: "Bowler", batting: "Right", age: 26, matches: 22, prevTeams: ["Peshawar Zalmi", "Islamabad United"] },
+    { id: 2, name: "Aamir Jamal", nation: "Pakistan", team: "Karachi Kings", role: "All-Rounder", batting: "Right", age: 28, matches: 15, prevTeams: ["Peshawar Zalmi"] },
+    { id: 39, name: "Sahibzada Farhan", nation: "Pakistan", team: "Islamabad United", role: "Batter", batting: "Right", age: 28, matches: 32, prevTeams: ["Karachi Kings", "Lahore Qalandars"] },
+    { id: 40, name: "Saud Shakeel", nation: "Pakistan", team: "Quetta Gladiators", role: "Batter", batting: "Left", age: 29, matches: 12, prevTeams: [] },
+    { id: 41, name: "Wanindu Hasaranga", nation: "Sri Lanka", team: "Quetta Gladiators", role: "All-Rounder", batting: "Right", age: 27, matches: 0, prevTeams: [] },
+    { id: 15, name: "David Willey", nation: "England", team: "Multan Sultans", role: "Bowler", batting: "Right", age: 34, matches: 25, prevTeams: [] },
+    { id: 43, name: "Luke Wood", nation: "England", team: "Peshawar Zalmi", role: "Bowler", batting: "Left", age: 29, matches: 11, prevTeams: ["Quetta Gladiators"] },
+    { id: 44, name: "Shahnawaz Dahani", nation: "Pakistan", team: "Multan Sultans", role: "Bowler", batting: "Right", age: 26, matches: 28, prevTeams: [] },
+    { id: 4, name: "Chris Jordan", nation: "England", team: "Multan Sultans", role: "Bowler", batting: "Right", age: 36, matches: 28, prevTeams: ["Peshawar Zalmi", "Karachi Kings", "Islamabad United"] },
+    { id: 46, name: "Rassie van der Dussen", nation: "South Africa", team: "Islamabad United", role: "Batter", batting: "Right", age: 35, matches: 13, prevTeams: ["Lahore Qalandars"] },
+    { id: 47, name: "Mohammad Nawaz", nation: "Pakistan", team: "Islamabad United", role: "All-Rounder", batting: "Left", age: 30, matches: 78, prevTeams: ["Quetta Gladiators", "Karachi Kings"] },
+    { id: 16, name: "Tom Kohler-Cadmore", nation: "England", team: "Peshawar Zalmi", role: "Batter", batting: "Right", age: 30, matches: 22, prevTeams: [] },
+    { id: 49, name: "Anwar Ali", nation: "Pakistan", team: "Karachi Kings", role: "All-Rounder", batting: "Right", age: 37, matches: 52, prevTeams: ["Quetta Gladiators", "Multan Sultans"] },
+    { id: 50, name: "Sharjeel Khan", nation: "Pakistan", team: "Karachi Kings", role: "Batter", batting: "Left", age: 35, matches: 50, prevTeams: ["Islamabad United"] },
+    { id: 51, name: "Sohail Tanvir", nation: "Pakistan", team: "Quetta Gladiators", role: "Bowler", batting: "Left", age: 40, matches: 65, prevTeams: ["Karachi Kings", "Multan Sultans", "Lahore Qalandars"] },
+    { id: 10, name: "Kamran Akmal", nation: "Pakistan", team: "Peshawar Zalmi", role: "WK-Batter", batting: "Right", age: 43, matches: 75, prevTeams: [] },
+    { id: 53, name: "Sherfane Rutherford", nation: "West Indies", team: "Quetta Gladiators", role: "Batter", batting: "Left", age: 26, matches: 32, prevTeams: ["Karachi Kings", "Peshawar Zalmi"] },
+    { id: 54, name: "Daniel Sams", nation: "Australia", team: "Peshawar Zalmi", role: "All-Rounder", batting: "Right", age: 32, matches: 12, prevTeams: ["Karachi Kings"] },
+    { id: 5, name: "Sam Billings", nation: "England", team: "Lahore Qalandars", role: "WK-Batter", batting: "Right", age: 33, matches: 18, prevTeams: ["Islamabad United"] },
+    { id: 56, name: "Sufiyan Muqeem", nation: "Pakistan", team: "Peshawar Zalmi", role: "Bowler", batting: "Left", age: 25, matches: 10, prevTeams: [] },
+    { id: 57, name: "Mohammad Ali", nation: "Pakistan", team: "Peshawar Zalmi", role: "Bowler", batting: "Right", age: 32, matches: 12, prevTeams: ["Multan Sultans"] },
+    { id: 58, name: "Hussain Talat", nation: "Pakistan", team: "Peshawar Zalmi", role: "All-Rounder", batting: "Left", age: 28, matches: 55, prevTeams: ["Islamabad United", "Lahore Qalandars"] },
+    { id: 11, name: "Asif Afridi", nation: "Pakistan", team: "Lahore Qalandars", role: "All-Rounder", batting: "Right", age: 37, matches: 15, prevTeams: ["Multan Sultans"] },
+    { id: 60, name: "Tayyab Tahir", nation: "Pakistan", team: "Multan Sultans", role: "Batter", batting: "Right", age: 31, matches: 12, prevTeams: ["Karachi Kings"] },
+    { id: 61, name: "Matthew Short", nation: "Australia", team: "Islamabad United", role: "All-Rounder", batting: "Right", age: 29, matches: 0, prevTeams: [] },
+    { id: 62, name: "David Warner", nation: "Australia", team: "Karachi Kings", role: "Batter", batting: "Left", age: 39, matches: 11, prevTeams: [] },
+    { id: 6, name: "Daryl Mitchell", nation: "New Zealand", team: "Lahore Qalandars", role: "All-Rounder", batting: "Right", age: 34, matches: 9, prevTeams: [] },
+    { id: 64, name: "Michael Bracewell", nation: "New Zealand", team: "Multan Sultans", role: "All-Rounder", batting: "Left", age: 33, matches: 8, prevTeams: [] },
+    { id: 65, name: "Mark Chapman", nation: "New Zealand", team: "Quetta Gladiators", role: "Batter", batting: "Left", age: 30, matches: 5, prevTeams: [] },
+    { id: 1, name: "Finn Allen", nation: "New Zealand", team: "Quetta Gladiators", role: "Batter", batting: "Right", age: 25, matches: 11, prevTeams: [] },
+    { id: 67, name: "Adam Milne", nation: "New Zealand", team: "Karachi Kings", role: "Bowler", batting: "Right", age: 32, matches: 2, prevTeams: [] },
+    { id: 68, name: "Kusal Perera", nation: "Sri Lanka", team: "Lahore Qalandars", role: "WK-Batter", batting: "Left", age: 34, matches: 4, prevTeams: [] },
+    { id: 17, name: "Akeal Hosein", nation: "West Indies", team: "Quetta Gladiators", role: "Bowler", batting: "Left", age: 31, matches: 10, prevTeams: [] },
+    { id: 70, name: "Johnson Charles", nation: "West Indies", team: "Multan Sultans", role: "Batter", batting: "Right", age: 36, matches: 15, prevTeams: [] },
+    { id: 71, name: "Shai Hope", nation: "West Indies", team: "Multan Sultans", role: "WK-Batter", batting: "Right", age: 31, matches: 9, prevTeams: ["Lahore Qalandars"] },
+    { id: 72, name: "Jason Holder", nation: "West Indies", team: "Islamabad United", role: "All-Rounder", batting: "Right", age: 33, matches: 8, prevTeams: [] },
+    { id: 12, name: "Kane Williamson", nation: "New Zealand", team: "Karachi Kings", role: "Batter", batting: "Right", age: 34, matches: 0, prevTeams: [] },
+    { id: 74, name: "Chris Lynn", nation: "Australia", team: "Multan Sultans", role: "Batter", batting: "Right", age: 34, matches: 15, prevTeams: ["Lahore Qalandars"] },
+    { id: 76, name: "Ben Dwarshuis", nation: "Australia", team: "Islamabad United", role: "Bowler", batting: "Left", age: 30, matches: 7, prevTeams: [] },
+    { id: 77, name: "Rishad Hossain", nation: "Bangladesh", team: "Lahore Qalandars", role: "Bowler", batting: "Right", age: 22, matches: 0, prevTeams: [] },
+    { id: 7, name: "Litton Das", nation: "Bangladesh", team: "Karachi Kings", role: "WK-Batter", batting: "Right", age: 30, matches: 0, prevTeams: [] },
+    { id: 79, name: "Hassan Nawaz", nation: "Pakistan", team: "Quetta Gladiators", role: "Batter", batting: "Right", age: 23, matches: 12, prevTeams: ["Islamabad United"] },
+    { id: 80, name: "Jahandad Khan", nation: "Pakistan", team: "Lahore Qalandars", role: "All-Rounder", batting: "Left", age: 21, matches: 9, prevTeams: [] },
+    { id: 81, name: "Faisal Akram", nation: "Pakistan", team: "Multan Sultans", role: "Bowler", batting: "Left", age: 21, matches: 3, prevTeams: [] },
+    { id: 82, name: "Arif Yaqoob", nation: "Pakistan", team: "Peshawar Zalmi", role: "Bowler", batting: "Right", age: 30, matches: 5, prevTeams: [] },
+    { id: 8, name: "Mehran Mumtaz", nation: "Pakistan", team: "Peshawar Zalmi", role: "Bowler", batting: "Left", age: 21, matches: 5, prevTeams: [] },
+    { id: 84, name: "Khawaja Nafay", nation: "Pakistan", team: "Quetta Gladiators", role: "Batter", batting: "Right", age: 23, matches: 10, prevTeams: [] },
+    { id: 85, name: "Usman Tariq", nation: "Pakistan", team: "Quetta Gladiators", role: "Bowler", batting: "Right", age: 27, matches: 6, prevTeams: [] },
+    { id: 86, name: "Irfan Khan Niazi", nation: "Pakistan", team: "Karachi Kings", role: "Batter", batting: "Right", age: 22, matches: 18, prevTeams: [] },
+    { id: 13, name: "Ali Raza", nation: "Pakistan", team: "Peshawar Zalmi", role: "Bowler", batting: "Right", age: 17, matches: 0, prevTeams: [] },
+    { id: 88, name: "Hunain Shah", nation: "Pakistan", team: "Islamabad United", role: "Bowler", batting: "Right", age: 21, matches: 8, prevTeams: [] },
+    { id: 89, name: "Ubaid Shah", nation: "Pakistan", team: "Multan Sultans", role: "Bowler", batting: "Right", age: 19, matches: 11, prevTeams: ["Islamabad United"] },
+    { id: 90, name: "Yasir Khan", nation: "Pakistan", team: "Multan Sultans", role: "Batter", batting: "Right", age: 24, matches: 7, prevTeams: [] },
+    { id: 91, name: "Mir Hamza", nation: "Pakistan", team: "Karachi Kings", role: "Bowler", batting: "Left", age: 32, matches: 20, prevTeams: ["Quetta Gladiators"] },
+    { id: 92, name: "Rumman Raees", nation: "Pakistan", team: "Islamabad United", role: "Bowler", batting: "Right", age: 33, matches: 60, prevTeams: ["Multan Sultans"] },
+    { id: 93, name: "Zahid Mahmood", nation: "Pakistan", team: "Karachi Kings", role: "Bowler", batting: "Right", age: 36, matches: 25, prevTeams: ["Quetta Gladiators", "Islamabad United"] },
+    { id: 9, name: "Salman Irshad", nation: "Pakistan", team: "Islamabad United", role: "Bowler", batting: "Right", age: 29, matches: 35, prevTeams: ["Peshawar Zalmi", "Lahore Qalandars"] },
+    { id: 95, name: "Mohammad Wasim Jr", nation: "Pakistan", team: "Quetta Gladiators", role: "Bowler", batting: "Right", age: 23, matches: 45, prevTeams: ["Islamabad United"] },
+    { id: 96, name: "Arafat Minhas", nation: "Pakistan", team: "Karachi Kings", role: "All-Rounder", batting: "Left", age: 19, matches: 5, prevTeams: [] },
+    { id: 97, name: "Kamran Ghulam", nation: "Pakistan", team: "Multan Sultans", role: "Batter", batting: "Right", age: 29, matches: 25, prevTeams: ["Lahore Qalandars", "Islamabad United"] },
+    { id: 98, name: "Haider Ali", nation: "Pakistan", team: "Islamabad United", role: "Batter", batting: "Right", age: 24, matches: 55, prevTeams: ["Peshawar Zalmi", "Karachi Kings"] },
+    { id: 99, name: "Mohammad Hasnain", nation: "Pakistan", team: "Multan Sultans", role: "Bowler", batting: "Right", age: 24, matches: 42, prevTeams: ["Quetta Gladiators"] },
+    { id: 100, name: "Danish Aziz", nation: "Pakistan", team: "Quetta Gladiators", role: "All-Rounder", batting: "Left", age: 29, matches: 20, prevTeams: ["Karachi Kings"] },
+    { id: 101, name: "Omair Yousuf", nation: "Pakistan", team: "Karachi Kings", role: "Batter", batting: "Right", age: 26, matches: 5, prevTeams: ["Quetta Gladiators"] },
+    { id: 102, name: "Ahmed Daniyal", nation: "Pakistan", team: "Peshawar Zalmi", role: "Bowler", batting: "Right", age: 27, matches: 15, prevTeams: ["Lahore Qalandars"] },
+    { id: 103, name: "Akif Javed", nation: "Pakistan", team: "Multan Sultans", role: "Bowler", batting: "Left", age: 24, matches: 20, prevTeams: ["Islamabad United", "Karachi Kings"] },
+    { id: 104, name: "Khurram Shehzad", nation: "Pakistan", team: "Quetta Gladiators", role: "Bowler", batting: "Right", age: 25, matches: 15, prevTeams: [] },
+    { id: 105, name: "Haseebullah Khan", nation: "Pakistan", team: "Quetta Gladiators", role: "WK-Batter", batting: "Left", age: 21, matches: 10, prevTeams: ["Peshawar Zalmi"] },
+    { id: 106, name: "Mohammad Shehzad", nation: "Pakistan", team: "Islamabad United", role: "Batter", batting: "Right", age: 20, matches: 5, prevTeams: [] },
+    { id: 107, name: "Salman Mirza", nation: "Pakistan", team: "Lahore Qalandars", role: "Bowler", batting: "Right", age: 26, matches: 10, prevTeams: [] },
+    { id: 108, name: "Muhammad Akhlaq", nation: "Pakistan", team: "Lahore Qalandars", role: "WK-Batter", batting: "Right", age: 32, matches: 10, prevTeams: ["Karachi Kings", "Islamabad United"] },
+    { id: 109, name: "Mohammad Azab", nation: "Pakistan", team: "Lahore Qalandars", role: "Bowler", batting: "Right", age: 21, matches: 0, prevTeams: [] },
+    { id: 110, name: "Maaz Sadaqat", nation: "Pakistan", team: "Peshawar Zalmi", role: "All-Rounder", batting: "Left", age: 19, matches: 4, prevTeams: [] },
+    { id: 111, name: "Misbah-ul-Haq", nation: "Pakistan", team: "Peshawar Zalmi", role: "Batter", batting: "Right", age: 51, matches: 39, prevTeams: ["Islamabad United"] },
+    { id: 112, name: "Shahid Afridi", nation: "Pakistan", team: "Quetta Gladiators", role: "All-Rounder", batting: "Right", age: 48, matches: 53, prevTeams: ["Peshawar Zalmi", "Karachi Kings", "Multan Sultans"] },
+    { id: 113, name: "Shane Watson", nation: "Australia", team: "Quetta Gladiators", role: "All-Rounder", batting: "Right", age: 43, matches: 46, prevTeams: ["Islamabad United"] },
+    { id: 114, name: "Kevin Pietersen", nation: "England", team: "Quetta Gladiators", role: "Batter", batting: "Right", age: 44, matches: 27, prevTeams: [] },
+    { id: 115, name: "Luke Ronchi", nation: "New Zealand", team: "Islamabad United", role: "WK-Batter", batting: "Right", age: 43, matches: 31, prevTeams: [] },
+    { id: 116, name: "Kumar Sangakkara", nation: "Sri Lanka", team: "Multan Sultans", role: "WK-Batter", batting: "Left", age: 47, matches: 28, prevTeams: ["Karachi Kings", "Quetta Gladiators"] },
+    { id: 117, name: "Darren Sammy", nation: "West Indies", team: "Peshawar Zalmi", role: "All-Rounder", batting: "Right", age: 41, matches: 49, prevTeams: [] },
+    { id: 18, name: "Mohammad Hafeez", nation: "Pakistan", team: "Quetta Gladiators", role: "All-Rounder", batting: "Right", age: 44, matches: 78, prevTeams: ["Peshawar Zalmi", "Lahore Qalandars"] },
+    { id: 119, name: "Chris Gayle", nation: "West Indies", team: "Quetta Gladiators", role: "Batter", batting: "Left", age: 45, matches: 16, prevTeams: ["Lahore Qalandars", "Karachi Kings"] },
+    { id: 120, name: "Younis Khan", nation: "Pakistan", team: "Peshawar Zalmi", role: "Batter", batting: "Right", age: 47, matches: 10, prevTeams: [] },
+    { id: 121, name: "Brendon McCullum", nation: "New Zealand", team: "Lahore Qalandars", role: "Batter", batting: "Right", age: 43, matches: 18, prevTeams: [] },
+    { id: 122, name: "Imran Tahir", nation: "South Africa", team: "Karachi Kings", role: "Bowler", batting: "Right", age: 45, matches: 50, prevTeams: ["Multan Sultans"] },
+    { id: 123, name: "Ravi Bopara", nation: "England", team: "Karachi Kings", role: "All-Rounder", batting: "Right", age: 39, matches: 31, prevTeams: ["Multan Sultans", "Peshawar Zalmi"] },
+    { id: 124, name: "Dwayne Bravo", nation: "West Indies", team: "Quetta Gladiators", role: "All-Rounder", batting: "Right", age: 41, matches: 15, prevTeams: ["Lahore Qalandars"] },
+    { id: 125, name: "Saeed Ajmal", nation: "Pakistan", team: "Islamabad United", role: "Bowler", batting: "Right", age: 47, matches: 12, prevTeams: [] },
+    { id: 126, name: "Ahmed Shehzad", nation: "Pakistan", team: "Quetta Gladiators", role: "Batter", batting: "Right", age: 33, matches: 45, prevTeams: ["Multan Sultans"] },
+    { id: 127, name: "Umar Akmal", nation: "Pakistan", team: "Quetta Gladiators", role: "Batter", batting: "Right", age: 34, matches: 40, prevTeams: ["Lahore Qalandars"] },
+    { id: 128, name: "Tamim Iqbal", nation: "Bangladesh", team: "Peshawar Zalmi", role: "Batter", batting: "Left", age: 35, matches: 20, prevTeams: ["Lahore Qalandars"] },
+    { id: 20, name: "Eoin Morgan", nation: "England", team: "Peshawar Zalmi", role: "Batter", batting: "Left", age: 38, matches: 10, prevTeams: [] },
+    { id: 130, name: "Andre Russell", nation: "West Indies", team: "Islamabad United", role: "All-Rounder", batting: "Right", age: 36, matches: 22, prevTeams: ["Multan Sultans"] },
+    { id: 131, name: "Ben Dunk", nation: "Australia", team: "Lahore Qalandars", role: "WK-Batter", batting: "Left", age: 37, matches: 30, prevTeams: ["Karachi Kings"] },
+    { id: 132, name: "Colin Ingram", nation: "South Africa", team: "Karachi Kings", role: "Batter", batting: "Left", age: 39, matches: 35, prevTeams: ["Islamabad United"] },
+    { id: 133, name: "Samuel Badree", nation: "West Indies", team: "Islamabad United", role: "Bowler", batting: "Right", age: 43, matches: 20, prevTeams: [] },
+    { id: 134, name: "Brad Hodge", nation: "Australia", team: "Peshawar Zalmi", role: "Batter", batting: "Right", age: 49, matches: 10, prevTeams: [] },
+    { id: 135, name: "Mahela Jayawardene", nation: "Sri Lanka", team: "Karachi Kings", role: "Batter", batting: "Right", age: 47, matches: 12, prevTeams: [] },
+    { id: 136, name: "Grant Elliott", nation: "New Zealand", team: "Lahore Qalandars", role: "All-Rounder", batting: "Right", age: 45, matches: 15, prevTeams: ["Quetta Gladiators"] },
+    { id: 137, name: "Thisara Perera", nation: "Sri Lanka", team: "Karachi Kings", role: "All-Rounder", batting: "Left", age: 35, matches: 18, prevTeams: ["Quetta Gladiators"] },
+    { id: 138, name: "Mohammad Irfan", nation: "Pakistan", team: "Quetta Gladiators", role: "Bowler", batting: "Right", age: 42, matches: 62, prevTeams: ["Islamabad United", "Multan Sultans", "Peshawar Zalmi"] },
+    { id: 139, name: "Sohaib Maqsood", nation: "Pakistan", team: "Islamabad United", role: "Batter", batting: "Right", age: 37, matches: 55, prevTeams: ["Peshawar Zalmi", "Multan Sultans"] },
+    { id: 140, name: "Samit Patel", nation: "England", team: "Lahore Qalandars", role: "All-Rounder", batting: "Right", age: 40, matches: 35, prevTeams: ["Islamabad United"] },
+    { id: 141, name: "Liam Livingstone", nation: "England", team: "Peshawar Zalmi", role: "All-Rounder", batting: "Right", age: 31, matches: 15, prevTeams: ["Karachi Kings"] },
+    { id: 19, name: "Sunil Narine", nation: "West Indies", team: "Lahore Qalandars", role: "All-Rounder", batting: "Left", age: 36, matches: 25, prevTeams: [] },
+    { id: 143, name: "Zulfiqar Babar", nation: "Pakistan", team: "Quetta Gladiators", role: "Bowler", batting: "Right", age: 46, matches: 24, prevTeams: [] },
+    { id: 144, name: "Azhar Ali", nation: "Pakistan", team: "Lahore Qalandars", role: "Batter", batting: "Right", age: 39, matches: 20, prevTeams: [] },
+    { id: 145, name: "Fawad Alam", nation: "Pakistan", team: "Karachi Kings", role: "All-Rounder", batting: "Left", age: 39, matches: 0, prevTeams: [] },
+    { id: 146, name: "Yasir Shah", nation: "Pakistan", team: "Lahore Qalandars", role: "Bowler", batting: "Right", age: 38, matches: 30, prevTeams: [] },
+    { id: 147, name: "Dawid Malan", nation: "England", team: "Multan Sultans", role: "Batter", batting: "Left", age: 37, matches: 22, prevTeams: ["Peshawar Zalmi", "Islamabad United"] },
+    { id: 148, name: "Shakib Al Hasan", nation: "Bangladesh", team: "Lahore Qalandars", role: "All-Rounder", batting: "Left", age: 37, matches: 15, prevTeams: ["Karachi Kings", "Peshawar Zalmi"] },
+    { id: 149, name: "James Faulkner", nation: "Australia", team: "Lahore Qalandars", role: "All-Rounder", batting: "Right", age: 34, matches: 12, prevTeams: ["Quetta Gladiators"] },
+    { id: 150, name: "Mujeeb Ur Rahman", nation: "Afghanistan", team: "Peshawar Zalmi", role: "Bowler", batting: "Right", age: 23, matches: 10, prevTeams: [] },
+    { id: 151, name: "Mohammad Nabi", nation: "Afghanistan", team: "Karachi Kings", role: "All-Rounder", batting: "Right", age: 39, matches: 35, prevTeams: ["Quetta Gladiators"] },
+    { id: 152, name: "Usman Khawaja", nation: "Australia", team: "Islamabad United", role: "Batter", batting: "Left", age: 38, matches: 10, prevTeams: [] },
+    { id: 153, name: "Tim David", nation: "Australia", team: "Multan Sultans", role: "Batter", batting: "Right", age: 28, matches: 25, prevTeams: ["Lahore Qalandars"] },
+    { id: 154, name: "Rashid Khan", nation: "Afghanistan", team: "Lahore Qalandars", role: "Bowler", batting: "Right", age: 26, matches: 35, prevTeams: [] },
+    { id: 155, name: "Bilal Asif", nation: "Pakistan", team: "Karachi Kings", role: "All-Rounder", batting: "Right", age: 39, matches: 15, prevTeams: ["Peshawar Zalmi"] },
+    { id: 156, name: "Cameron Delport", nation: "South Africa", team: "Karachi Kings", role: "All-Rounder", batting: "Left", age: 35, matches: 32, prevTeams: ["Lahore Qalandars", "Islamabad United", "Quetta Gladiators"] },
+    { id: 157, name: "Lendl Simmons", nation: "West Indies", team: "Karachi Kings", role: "Batter", batting: "Right", age: 39, matches: 18, prevTeams: [] },
+    { id: 158, name: "Dwayne Smith", nation: "West Indies", team: "Islamabad United", role: "Batter", batting: "Right", age: 41, matches: 25, prevTeams: ["Peshawar Zalmi", "Quetta Gladiators"] },
+    { id: 159, name: "Tymal Mills", nation: "England", team: "Islamabad United", role: "Bowler", batting: "Right", age: 32, matches: 20, prevTeams: ["Quetta Gladiators", "Peshawar Zalmi"] },
+    { id: 160, name: "Rahmanullah Gurbaz", nation: "Afghanistan", team: "Islamabad United", role: "WK-Batter", batting: "Right", age: 23, matches: 18, prevTeams: [] }
     ];
 
-    let targetPlayer = players[Math.floor(Math.random() * players.length)];
+    let targetPlayer;
+    let guesses = 0;
+    const maxGuesses = 8;
+    let gameOver = false;
 
-    // 2. LOAD BY NUMBER FUNCTION
-    function loadGameByNumber() {
-        const num = parseInt(document.getElementById("gameNumber").value);
-        if (num >= 1 && num <= players.length) {
-            targetPlayer = players[num - 1]; // Array is 0-indexed
-            document.getElementById("grid").innerHTML = ""; // Clear board
-            document.getElementById("gameStatus").textContent = "Loaded Game #" + num;
-            alert("New game loaded! Start guessing.");
+    function resetGame(forcedId = null) {
+        guesses = 0;
+        gameOver = false;
+        document.getElementById('currentGuesses').textContent = guesses;
+        document.getElementById('gameBoard').innerHTML = '';
+        document.getElementById('menu-overlay').style.display = 'none';
+        document.getElementById('mainInput').disabled = false;
+        document.getElementById('mainInput').value = '';
+        
+        if (forcedId && players.find(p => p.id == forcedId)) {
+            targetPlayer = players.find(p => p.id == forcedId);
         } else {
-            alert("Please enter a number between 1 and " + players.length);
+            targetPlayer = players[Math.floor(Math.random() * players.length)];
         }
     }
 
-    // 3. UI FUNCTIONS
-    function showSuggestions() {
-        const input = document.getElementById("guessInput").value.toLowerCase();
-        const list = document.getElementById("suggestionsList");
-        list.innerHTML = "";
-        if (input.length === 0) return;
-        players.filter(p => p.name.toLowerCase().includes(input)).forEach(player => {
-            const li = document.createElement("li");
-            li.textContent = player.name;
-            li.onclick = () => makeGuess(player);
-            list.appendChild(li);
+    function filterPlayers() {
+        if (gameOver) return;
+        const query = document.getElementById('mainInput').value.toLowerCase();
+        const sugBox = document.getElementById('suggestions');
+        sugBox.innerHTML = '';
+        if(!query) return;
+
+        players.filter(p => p.name.toLowerCase().includes(query)).forEach(p => {
+            const li = document.createElement('li');
+            li.textContent = p.name;
+            li.onclick = () => submitGuess(p);
+            sugBox.appendChild(li);
         });
     }
 
-    function makeGuess(player) {
-        document.getElementById("guessInput").value = "";
-        document.getElementById("suggestionsList").innerHTML = "";
-        const grid = document.getElementById("grid");
-        const row = document.createElement("div");
-        row.className = "row";
+    function submitGuess(guess) {
+        if (gameOver) return;
+        
+        guesses++;
+        document.getElementById('currentGuesses').textContent = guesses;
+        document.getElementById('mainInput').value = '';
+        document.getElementById('suggestions').innerHTML = '';
+        
+        const board = document.getElementById('gameBoard');
+        const row = document.createElement('div');
+        row.className = 'row';
 
-        const createCell = (value, type, targetVal) => {
-            const div = document.createElement("div");
-            div.className = "cell";
-            let content = value;
-            let color = "grey";
+        const fields = [
+            { val: guess.name, key: 'name' },
+            { val: guess.nation, key: 'nation' },
+            { val: guess.team, key: 'team' },
+            { val: guess.role, key: 'role' },
+            { val: guess.batting, key: 'batting' },
+            { val: guess.age, key: 'age', type: 'num' },
+            { val: guess.matches, key: 'matches', type: 'num' }
+        ];
 
-            if (value === targetVal) {
-                color = "green";
-            } else if (type === "num") {
-                if (Math.abs(value - targetVal) <= 5) color = "yellow";
-                content = `${value} <span class="arrow">${targetVal > value ? '↑' : '↓'}</span>`;
+        fields.forEach((field, index) => {
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            cell.style.animationDelay = (index * 0.1) + 's';
+            
+            let status = 'wrong';
+            let content = field.val;
+
+            if (field.val === targetPlayer[field.key]) {
+                status = 'green';
+            } 
+            else if (field.key === 'team' && targetPlayer.prevTeams.includes(field.val)) {
+                status = 'yellow';
+            }
+            else if (field.type === 'num') {
+                const diff = Math.abs(field.val - targetPlayer[field.key]);
+                if (diff <= 5) status = 'yellow';
+                const arrow = targetPlayer[field.key] > field.val ? '↑' : '↓';
+                content = `${field.val}<span class="arrow">${arrow}</span>`;
             }
 
-            div.innerHTML = content;
-            div.classList.add(color);
-            return div;
-        };
+            cell.innerHTML = content;
+            cell.classList.add(status);
+            row.appendChild(cell);
+        });
 
-        row.appendChild(createCell(player.name, "txt", targetPlayer.name));
-        row.appendChild(createCell(player.nation, "txt", targetPlayer.nation));
-        row.appendChild(createCell(player.team, "txt", targetPlayer.team));
-        row.appendChild(createCell(player.role, "txt", targetPlayer.role));
-        row.appendChild(createCell(player.batting, "txt", targetPlayer.batting));
-        row.appendChild(createCell(player.age, "num", targetPlayer.age));
-        row.appendChild(createCell(player.matches, "num", targetPlayer.matches));
+        board.prepend(row);
 
-        grid.prepend(row);
-        if (player.name === targetPlayer.name) alert("Correct! It was " + targetPlayer.name);
+        if (guess.name === targetPlayer.name) {
+            endGame(true);
+        } else if (guesses >= maxGuesses) {
+            endGame(false);
+        }
     }
+
+    function endGame(win) {
+        gameOver = true;
+        document.getElementById('mainInput').disabled = true;
+        const overlay = document.getElementById('menu-overlay');
+        const title = document.getElementById('modal-title');
+        const msg = document.getElementById('modal-msg');
+        
+        overlay.style.display = 'flex';
+        document.getElementById('correct-player-name').textContent = targetPlayer.name;
+
+        if (win) {
+            title.textContent = "OUTSTANDING! 🏏";
+            title.className = "win-text";
+            msg.textContent = `You identified the star in ${guesses} attempts.`;
+        } else {
+            title.textContent = "GAME OVER";
+            title.className = "lose-text";
+            msg.textContent = "You've run out of guesses!";
+        }
+    }
+
+    function closeMenu() {
+        document.getElementById('menu-overlay').style.display = 'none';
+    }
+
+    // Initialize first game
+    resetGame();
 </script>
 </body>
-
 </html>
-
-
